@@ -40,6 +40,11 @@ function calcRoute() {
     markerArray[i].setMap(null);
   }
   
+  // First, remove any existing markers from the map.
+  for (var i = 0; i < poiMarkerArray.length; i++) {
+    poiMarkerArray[i].setMap(null);
+  }
+  
 
   // Now, clear the arrays itself.
   markerArray = [];
@@ -63,7 +68,6 @@ function calcRoute() {
       warnings.innerHTML = '<b>' + response.routes[0].warnings + '</b>';
       directionsDisplay.setDirections(response);
       showSteps(response);
-	  drawPois();
     }
   });
 }
@@ -106,20 +110,13 @@ function performSearch(stepLocation, poiRadius) {
   };
   service.radarSearch(request, callback);
 }
-
 function callback(results, status) {
   if (status != google.maps.places.PlacesServiceStatus.OK) {
     alert(status);
     return;
   }
   for (var i = 0, result; result = results[i]; i++) {
-	poiMarkerArray.push(result);
-  }
-}
-
-function drawPois() {
-	for (var i = 0, result; result = poiMarkerArray[i]; i++) {
-	createMarker(result);
+    createMarker(result);
   }
 }
 
@@ -137,6 +134,7 @@ function createMarker(place) {
       strokeWeight: 1
     }
   });
+  poiMarkerArray.push(marker);
 
   google.maps.event.addListener(marker, 'click', function() {
     service.getDetails(place, function(result, status) {
