@@ -1,6 +1,7 @@
 var map;
 var directionsDisplay;
 var directionsService;
+var rboxer;
 var stepDisplay;
 var infoWindow;
 var service;
@@ -10,7 +11,7 @@ var poiMarkerArray = [];
 function initialize() {
   // Instantiate a directions service.
   directionsService = new google.maps.DirectionsService();
-
+  rboxer = new RouteBoxer();
   // Create a map and center it on Manhattan.
   var manhattan = new google.maps.LatLng(40.7711329, -73.9741874);
   var mapOptions = {
@@ -67,12 +68,17 @@ function calcRoute() {
       var warnings = document.getElementById('warnings_panel');
       warnings.innerHTML = '<b>' + response.routes[0].warnings + '</b>';
       directionsDisplay.setDirections(response);
-      showSteps(response);
+	  // Box the overview path of the first route
+      var path = response.routes[0].overview_path;
+	  var distance = 0.3; // km
+      var boxes = rboxer.box(path, distance);
+    
+      showSteps(response, boxes);
     }
   });
 }
 
-function showSteps(directionResult) {
+function showSteps(directionResult, boxes) {
   // For each step, place a marker, and add the text to the marker's
   // info window. Also attach the marker to an array so we
   // can keep track of it and remove it when calculating new
@@ -86,7 +92,9 @@ function showSteps(directionResult) {
     });
     attachInstructionText(marker, myRoute.steps[i].instructions);
     markerArray[i] = marker;
-	performSearch(marker.position, 200)
+  }
+  for (var i = 0; i < boxes.length; i++) {
+	performPoiSearch(boxes[i])
   }
 }
 
@@ -99,14 +107,12 @@ function attachInstructionText(marker, text) {
   });
 }
 
-function performSearch(stepLocation, poiRadius) {
+function performPoiSearch(box) {
 
   var poi = document.getElementById('poi').value;
   var request = {
-    bounds: map.getBounds(),
-    keyword: poi,
-	location: stepLocation,
-	radius: poiRadius
+    bounds: box,
+    keyword: poi
   };
   service.radarSearch(request, callback);
 }
